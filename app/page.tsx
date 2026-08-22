@@ -318,7 +318,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <motion.div whileHover={{ borderColor: "#6366F1" }} className="hash-code-block">
+            <motion.div whileHover={{ borderColor: "#1677FF" }} className="hash-code-block">
               <span>CRYPTOGRAPHIC BASELINE SIGNATURE</span>
               <code>{typedHash}</code>
             </motion.div>
@@ -459,21 +459,21 @@ export default function Landing() {
           </div>
           <div className="tilt-preview-content">
             <div className="preview-hero-stats">
-              <motion.div whileHover={{ y: -3, borderColor: "#6366F1" }} className="animated-box">
+              <motion.div whileHover={{ y: -3, borderColor: "#1677FF" }} className="animated-box">
                 <span>MONITORED MODELS</span>
                 <strong>
                   <CountUpNumber target={12} />
                 </strong>
               </motion.div>
-              <motion.div whileHover={{ y: -3, borderColor: "#F59E0B" }} className="animated-box">
+              <motion.div whileHover={{ y: -3, borderColor: "#FF2D2D" }} className="animated-box">
                 <span>ACTIVE DRIFT EVENTS</span>
                 <strong className="text-amber">1 ALERT</strong>
               </motion.div>
-              <motion.div whileHover={{ y: -3, borderColor: "#22C55E" }} className="animated-box">
+              <motion.div whileHover={{ y: -3, borderColor: "#2196FF" }} className="animated-box">
                 <span>TEST FAILURES</span>
                 <strong className="text-green">0 TODAY</strong>
               </motion.div>
-              <motion.div whileHover={{ y: -3, borderColor: "#6366F1" }} className="animated-box">
+              <motion.div whileHover={{ y: -3, borderColor: "#1677FF" }} className="animated-box">
                 <span>AVG TRUST SCORE</span>
                 <strong className="text-green">
                   <CountUpNumber target={94} /> / 100

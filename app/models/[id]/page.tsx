@@ -321,8 +321,8 @@ function FingerprintViz() {
       <svg viewBox="0 0 700 220">
         <defs>
           <linearGradient id="fp" x1="0" x2="1">
-            <stop stopColor="#5668ff" />
-            <stop offset="1" stopColor="#39d7b4" />
+            <stop stopColor="#1677FF" />
+            <stop offset="1" stopColor="#2196FF" />
           </linearGradient>
         </defs>
         {Array.from({ length: 11 }, (_, i) => (

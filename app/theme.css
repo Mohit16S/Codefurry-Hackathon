@@ -1,0 +1,184 @@
+/* ModelSentinel Black / Red / Blue visual theme — intentionally loaded last. */
+:root {
+  --bg: #05070a;
+  --background: #05070a;
+  --surface: #0b1018;
+  --surface2: #080c12;
+  --surface-elevated: #101722;
+  --primary: #1677ff;
+  --primary-bright: #2196ff;
+  --primary-deep: #0b3d91;
+  --blue: #1677ff;
+  --blue-hover: #2196ff;
+  --green: #2196ff;
+  --amber: #ff4d4d;
+  --red: #ff2d2d;
+  --danger: #ff2d2d;
+  --danger-dark: #dc2626;
+  --text: #f5f7fa;
+  --text-secondary: #a7b0be;
+  --muted: #667085;
+  --border: #182230;
+  --border-strong: #263445;
+  --blue-glow: rgba(22,119,255,.25);
+  --red-glow: rgba(255,45,45,.25);
+}
+
+html, body { background:#05070a; color:#f5f7fa; }
+body {
+  background-image:
+    radial-gradient(circle at 8% -8%, rgba(22,119,255,.09), transparent 30rem),
+    radial-gradient(circle at 94% 105%, rgba(255,45,45,.055), transparent 34rem);
+  background-attachment: fixed;
+}
+
+::selection { background:rgba(22,119,255,.32); color:#fff; }
+:focus-visible { outline:2px solid #1677ff; outline-offset:2px; }
+
+/* Core surfaces */
+.app-shell, .app-main, .public-screen, .auth-page { background-color:#05070a; }
+.app-main {
+  background-image:radial-gradient(circle at 82% 0, rgba(11,61,145,.13), transparent 28rem);
+}
+aside { background:#070a0f; border-color:#182230; }
+.topnav { background:rgba(7,10,15,.94); border-color:#182230; }
+.panel, .metric-card, .model-card, .compare-col, .comparison-metrics,
+.integration-card, .policy-list, .cert-form-shell, .cert-stepper,
+.monitor-status, .evidence, .notification-panel, .user-dropdown-menu,
+.role-switcher-dropdown, .command-dialog, .modal-card, .dropdown-panel {
+  background-color:#0b1018;
+  border-color:#182230;
+}
+.panel:hover, .metric-card:hover, .model-card:hover, .integration-card:hover { border-color:#263a52; }
+
+/* Brand and interactive blue */
+.brandmark, .button.primary, .recommend-label {
+  background:linear-gradient(135deg,#1677ff,#0b3d91);
+  box-shadow:0 5px 20px rgba(22,119,255,.2);
+}
+.button.primary:hover { background:linear-gradient(135deg,#2196ff,#125fd1); box-shadow:0 7px 22px rgba(22,119,255,.28); }
+.brand > span:last-child span, a:hover, .text-purple, .text-green, .text-blue,
+.panel-kicker, .page-kicker, .score-value, .trust-score strong { color:#2196ff !important; }
+.bg-purple, .bg-green, .bg-blue { background:#1677ff !important; }
+.button.secondary { background:#101722; border-color:#263445; color:#a7cfff; }
+.button.secondary:hover { background:#111d2c; border-color:#1677ff; color:#fff; }
+.icon-btn { background:#0b1018; border-color:#182230; color:#a7b0be; }
+.icon-btn:hover { color:#2196ff; border-color:#1677ff; background:#101722; }
+
+/* Navigation */
+aside nav a, .side-bottom a { color:#8b96a8; border:1px solid transparent; }
+aside nav a:hover, .side-bottom a:hover { color:#d8eaff; background:rgba(22,119,255,.07); }
+aside nav a.active, .side-bottom a.active, .register-nav-btn.active {
+  color:#2196ff;
+  background:rgba(22,119,255,.12);
+  border-color:rgba(22,119,255,.3);
+  box-shadow:inset 3px 0 #1677ff;
+}
+.register-nav-btn { color:#a7cfff; border-color:#1a2a3d; background:#0b1018; }
+.register-nav-btn:hover { border-color:#1677ff; background:rgba(22,119,255,.08); }
+.role-persona-banner { background:rgba(22,119,255,.07); border-color:rgba(22,119,255,.2); }
+.role-persona-banner span, .role-persona-banner strong { color:#8fc7ff; }
+.search, .header-role-btn, .avatar-btn, .top-actions .action-badge-btn {
+  background:#0b1018 !important; border-color:#1a2a3d !important;
+}
+.search:hover, .search:focus-visible, .header-role-btn:hover, .avatar-btn:hover {
+  border-color:#1677ff !important; box-shadow:0 0 0 3px rgba(22,119,255,.1);
+}
+.search kbd { color:#8fc7ff; background:#101722; border-color:#263445; }
+.role-dropdown-item:hover, .role-dropdown-item.active, .command-result.active,
+.user-dropdown-item:hover, .workspace-menu-link:hover { background:rgba(22,119,255,.1); color:#f5f7fa; }
+.role-dropdown-item.active { border-color:rgba(22,119,255,.28); }
+.pulse-dot, .alert-badge { background:#ff2d2d !important; box-shadow:0 0 10px rgba(255,45,45,.55); }
+
+/* Forms, command palette, and overlays */
+input, textarea, select, .input, .cert-field input, .cert-field select, .cert-field textarea {
+  background-color:#0b1018 !important; border-color:#1d2a3a !important; color:#f5f7fa !important;
+}
+input::placeholder, textarea::placeholder { color:#667085 !important; }
+input:focus, textarea:focus, select:focus,
+.cert-field input:focus, .cert-field select:focus, .cert-field textarea:focus {
+  border-color:#1677ff !important; box-shadow:0 0 0 3px rgba(22,119,255,.15) !important;
+}
+input[aria-invalid=true], textarea[aria-invalid=true], .cert-field input[aria-invalid=true] {
+  border-color:#ff2d2d !important; box-shadow:0 0 0 3px rgba(255,45,45,.12) !important;
+}
+.overlay, .certification-overlay, .command-backdrop, .modal-backdrop { background:rgba(0,0,0,.7); }
+.command-dialog, .cert-wizard, .modal-card { background:#0b1018; border-color:#263445; }
+
+/* Certification */
+.cert-header, .cert-footer { background:#080c12; border-color:#182230; }
+.cert-shield, .cert-step-heading>span { color:#2196ff; background:rgba(22,119,255,.1); border-color:rgba(22,119,255,.32); }
+.cert-title-lockup>div>span, .cert-header-actions>span { color:#2196ff; }
+.cert-stepper button.active { color:#f5f7fa; }
+.cert-stepper button.active>span, .cert-stepper button.complete>span {
+  color:#fff; background:#0b3d91; border-color:#2196ff;
+  box-shadow:0 0 0 5px rgba(22,119,255,.08),0 0 22px rgba(22,119,255,.2);
+}
+.cert-stepper button.complete, .connection-results span, .probe-pass-row span,
+.monitor-enabled { color:#68b7ff; border-color:#174f86; background:#091a2a; }
+.cert-stepper>i.complete, .probe-run-panel b { background:linear-gradient(90deg,#0b3d91,#2196ff); }
+.probe-choice-grid>button.selected { border-color:#1677ff; background:rgba(22,119,255,.1); }
+.probe-choice-grid>button.selected>span { background:#1677ff; border-color:#2196ff; }
+
+/* Status language: verified/healthy is blue, threats are red */
+.status.safe, .status.healthy, .status.certified, .status.verified,
+.text-safe, .safe .status-orb, .audit-seal, .decision-state>svg,
+.decision-state h2, .rule-pass, .protected-endpoint svg, .protected-endpoint span,
+.audit-control svg, .audit-control b { color:#2196ff !important; }
+.status.safe, .status.healthy, .status.certified, .status.verified {
+  background:rgba(22,119,255,.1); border-color:rgba(22,119,255,.28);
+}
+.status.warn, .text-amber, .risk-high, .risk-medium { color:#ff5757 !important; }
+.status.danger, .text-red, .risk-critical, .rule-fail, .critical h2 { color:#ff2d2d !important; }
+.button.danger { background:#dc2626; color:#fff; box-shadow:0 4px 16px rgba(255,45,45,.18); }
+.button.danger:hover { background:#ff2d2d; box-shadow:0 6px 20px rgba(255,45,45,.25); }
+.panel.attention, .drift-alert, .monitor-status.critical, .business-impact-panel,
+.evidence-score, .alert-card.critical, .row-alert { border-color:rgba(255,45,45,.38); }
+
+/* Tables and information density */
+thead { background:#080c12; }
+th { color:#8b96a8; border-color:#182230; }
+td { border-color:#182230; }
+tbody tr:hover { background:rgba(22,119,255,.045); }
+.metric-bar-fill, .cause-bar-fill { background:linear-gradient(90deg,#0b3d91,#2196ff) !important; }
+.compare-col.recommended, .alert-card.selected { border-color:#1677ff; background:linear-gradient(180deg,rgba(22,119,255,.09),#0b1018); }
+.why-card, .procurement-assistant, .audit-cover, .swap-sequence {
+  background:linear-gradient(120deg,rgba(11,61,145,.16),#0b1018); border-color:#263a52;
+}
+
+/* Remove role-specific purple/green decorative themes. */
+.badge-purple, .badge-green, .badge-blue, .header-role-btn[class*="badge-"] {
+  color:#8fc7ff !important; border-color:#1a4f86 !important; background:#091726 !important;
+}
+.role-accent-purple, .role-accent-green, .role-accent-amber, .role-accent-blue { --role-accent:#2196ff; }
+.ops-count-box.safe, .ops-count-box.info, .deployment-decision.approved {
+  color:#d8eaff; background:#091522; border-color:#174f86;
+}
+.ops-count-box.warn, .ops-count-box.danger, .deployment-decision.blocked {
+  background:#1b0b0e; border-color:#7f1d1d;
+}
+
+/* Login/public presentation */
+.auth-page, .public-screen {
+  background-color:#05070a;
+  background-image:radial-gradient(circle at 18% 8%,rgba(22,119,255,.12),transparent 30rem),radial-gradient(circle at 85% 85%,rgba(255,45,45,.07),transparent 30rem);
+}
+.auth-card, .login-card { background:#0b1018; border-color:#263445; }
+.hero-gradient-text, .text-gradient {
+  background:linear-gradient(90deg,#f5f7fa 0%,#2196ff 58%,#1677ff 100%) !important;
+  -webkit-background-clip:text !important; background-clip:text !important; color:transparent !important;
+}
+.app-shell aside nav a.active svg { color:#2196ff !important; filter:drop-shadow(0 0 6px rgba(22,119,255,.35)); }
+.certify-final { background:linear-gradient(135deg,#1677ff,#0b3d91) !important; }
+.confidence em { background:linear-gradient(90deg,#0b3d91,#2196ff) !important; }
+.report-badge, .diff-title, .cause-prob, .cro-hero-kicker, .user-role-pill,
+.recommendation-copy>span, .audit-cover>div>span, .audit-cover h2 em,
+.integration-card>button, .policy-list-head button, .policy-rule code,
+.fingerprint-preview>code, .input-suffix span, .cert-mobile-progress span,
+.cert-processing>span, .cert-success>span { color:#2196ff !important; }
+.fingerprint-bars i { background:linear-gradient(180deg,#2196ff,#0b3d91) !important; box-shadow:0 0 10px rgba(22,119,255,.22) !important; }
+.fingerprint-bars { background:linear-gradient(180deg,rgba(22,119,255,.07),transparent) !important; }
+
+/* Utility safety net for legacy brand accents. */
+[class*="purple"] { --legacy-accent:#2196ff; }
+.session-loading { min-height:100vh; display:grid; place-content:center; gap:10px; background:#05070a; color:#8fc7ff; font:500 11px var(--mono); text-align:center; }

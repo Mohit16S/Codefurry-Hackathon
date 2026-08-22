@@ -64,8 +64,8 @@ export function DriftChart({
           <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="driftFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={danger ? "#ff5964" : "#6e7bff"} stopOpacity={0.4} />
-                <stop offset="100%" stopColor={danger ? "#ff5964" : "#6e7bff"} stopOpacity={0.0} />
+                <stop offset="0%" stopColor={danger ? "#FF2D2D" : "#2196FF"} stopOpacity={0.4} />
+                <stop offset="100%" stopColor={danger ? "#FF2D2D" : "#2196FF"} stopOpacity={0.0} />
               </linearGradient>
             </defs>
             <CartesianGrid stroke="#1e2536" vertical={false} strokeDasharray="3 3" />
@@ -84,14 +84,14 @@ export function DriftChart({
             />
             <ReferenceLine
               y={95}
-              stroke="#f0a638"
+              stroke="#DC2626"
               strokeDasharray="5 5"
-              label={{ value: "CERTIFIED THRESHOLD (95%)", fill: "#f0a638", fontSize: 9, position: "top" }}
+              label={{ value: "CERTIFIED THRESHOLD (95%)", fill: "#FF5757", fontSize: 9, position: "top" }}
             />
             <Area
               type="monotone"
               dataKey="similarity"
-              stroke={danger ? "#ff5964" : "#7c8aff"}
+              stroke={danger ? "#FF2D2D" : "#2196FF"}
               strokeWidth={2.5}
               fill="url(#driftFill)"
               animationDuration={800}
@@ -124,8 +124,8 @@ export function ModelRadar({
             <PolarGrid stroke="#262e40" />
             <PolarAngleAxis dataKey="metric" tick={{ fill: "#8992a6", fontSize: 10 }} />
             <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#566175", fontSize: 8 }} />
-            <Radar name="Certified Baseline" dataKey="certified" stroke="#7784ff" fill="#6675ff" fillOpacity={0.25} />
-            <Radar name="Current Production" dataKey="production" stroke="#ff5964" fill="#ff5964" fillOpacity={0.3} />
+            <Radar name="Certified Baseline" dataKey="certified" stroke="#2196FF" fill="#1677FF" fillOpacity={0.25} />
+            <Radar name="Current Production" dataKey="production" stroke="#FF2D2D" fill="#FF2D2D" fillOpacity={0.3} />
             <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
           </RadarChart>
         </ResponsiveContainer>
@@ -144,8 +144,8 @@ export function ModelRadar({
           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "#566175", fontSize: 8 }} />
           <Radar
             dataKey="value"
-            stroke={current ? "#ff5964" : "#7784ff"}
-            fill={current ? "#ff5964" : "#6675ff"}
+            stroke={current ? "#FF2D2D" : "#2196FF"}
+            fill={current ? "#FF2D2D" : "#1677FF"}
             fillOpacity={0.28}
           />
         </RadarChart>
