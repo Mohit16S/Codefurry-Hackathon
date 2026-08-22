@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, ShieldAlert, CheckCircle2, AlertTriangle, FileText, Printer } from "lucide-react";
+import { X, Download, ShieldAlert, CheckCircle2, AlertTriangle, FileText, Printer, FileDown } from "lucide-react";
 import { useDemo } from "./demo-provider";
 import { hash } from "@/lib/data";
 
@@ -12,8 +12,69 @@ export function IncidentReportModal() {
   if (!reportModalOpen) return null;
 
   const handlePrint = () => {
-    addToast("Exporting Report", "AI Incident Report generated as PDF package.", "success");
+    addToast("Exporting Report", "AI Incident Report opened for printing / PDF export.", "success");
     window.print();
+  };
+
+  const handleDownloadJSON = () => {
+    const reportData = {
+      reportId: "MS-INC-2026-8821",
+      generatedAt: "Aug 21, 2026 · 14:35:12 IST",
+      title: "AI Model Behavioral Deviation Audit",
+      executiveSummary:
+        "ModelSentinel Continuous Verification detected a critical behavioral drift event in Sentiment Pro (v3.2). Observed behavioral similarity dropped from 98.7% to 58.3% (a 41.7% net deviation from certified baseline fp_7a91c4e8b32f).",
+      model: {
+        identifier: "Sentiment Pro",
+        certifiedVersion: "v3.2",
+        endpoint: "api.neuralforge.ai/v3/eval",
+        baselineHash: hash,
+        status: "CRITICAL DRIFT",
+      },
+      deviations: [
+        { dimension: "Behavioral Similarity", baseline: "98.7%", observed: "58.3%", deviation: "-40.4%", impact: "CRITICAL" },
+        { dimension: "Classification Consistency", baseline: "99.1%", observed: "61.4%", deviation: "-37.7%", impact: "HIGH" },
+        { dimension: "Safety Refusal Policy", baseline: "96.5%", observed: "78.0%", deviation: "-18.5%", impact: "WARNING" },
+        { dimension: "Response Style & Tone", baseline: "95.0%", observed: "55.0%", deviation: "-40.0%", impact: "HIGH" },
+        { dimension: "P95 Latency", baseline: "83ms", observed: "245ms", deviation: "+162ms", impact: "MODERATE" },
+      ],
+      signature: "SHA256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    };
+
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ModelSentinel_Audit_MS-INC-2026-8821.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    addToast("Report Downloaded", "ModelSentinel Audit Report saved to your downloads.", "success");
+  };
+
+  const handleDownloadPackage = () => {
+    const packageData = {
+      packageId: "MS-PKG-2026-8821",
+      certifiedModel: "Sentiment Pro v3.2",
+      signatureHash: hash,
+      evidenceFiles: [
+        "behavioral_fingerprint.json",
+        "probe_suite_results.csv",
+        "sha256_verification_ledger.sig",
+      ],
+      verifiedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(packageData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ModelSentinel_Evidence_Package_MS-INC-2026-8821.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    addToast("Package Downloaded", "Cryptographic Evidence Package downloaded.", "success");
   };
 
   return (
@@ -32,6 +93,9 @@ export function IncidentReportModal() {
               <span>SECURITY INCIDENT AUDIT REPORT</span>
             </div>
             <div className="modal-actions">
+              <button className="button secondary sm" onClick={handleDownloadJSON}>
+                <FileDown size={14} /> Download Report (.JSON)
+              </button>
               <button className="button secondary sm" onClick={handlePrint}>
                 <Printer size={14} /> Print / Export PDF
               </button>
@@ -187,7 +251,12 @@ export function IncidentReportModal() {
             <button className="button secondary" onClick={() => setReportModalOpen(false)}>
               Close
             </button>
-            <button className="button primary" onClick={handlePrint}>
+
+            <button className="button secondary" onClick={handleDownloadJSON}>
+              <FileDown size={14} /> Download Report (.JSON)
+            </button>
+
+            <button className="button primary" onClick={handleDownloadPackage}>
               <Download size={14} /> Download Cryptographic Evidence Package (.ZIP)
             </button>
           </div>
