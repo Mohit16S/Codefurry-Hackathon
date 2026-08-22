@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en"><body><DemoProvider>{children}</DemoProvider></body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body><DemoProvider>{children}</DemoProvider></body></html>;
 }

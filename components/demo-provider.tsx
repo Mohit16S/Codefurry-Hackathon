@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { models as initialModels, Model } from "@/lib/data";
+import { InternalRole, toInternalRole, toDisplayRole, getRoleDashboardData } from "@/lib/role-data";
 
 export type ToastMessage = {
   id: string;
@@ -21,6 +22,7 @@ export type UserProfile = {
   name: string;
   email: string;
   role: UserRole;
+  roleId: InternalRole;
   organization: string;
   initials: string;
 };
@@ -52,14 +54,16 @@ type DemoContextType = {
   login: (email: string, role?: string) => void;
   signup: (name: string, email: string, organization: string, role: string) => void;
   logout: () => void;
-  switchRole: (newRole: UserRole) => void;
+  switchRole: (newRole: UserRole | InternalRole | string) => void;
   can: (action: string) => boolean;
+  roleData: ReturnType<typeof getRoleDashboardData>;
 };
 
 const defaultUser: UserProfile = {
   name: "Mohit Kumar",
   email: "mohit@modelsentinel.demo",
   role: "AI Security Engineer",
+  roleId: "AI_SECURITY_ENGINEER",
   organization: "Enterprise AI Security Lab",
   initials: "MK",
 };
@@ -78,9 +82,24 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [registerModalOpen, setRegisterModalOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Auth State
+  // Auth State with localStorage Persistence
   const [user, setUser] = useState<UserProfile>(defaultUser);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedRole = window.localStorage.getItem("modelsentinel-user-role");
+      if (savedRole) {
+        const displayRole = toDisplayRole(savedRole);
+        const internalRole = toInternalRole(savedRole);
+        setUser((prev) => ({
+          ...prev,
+          role: displayRole,
+          roleId: internalRole,
+        }));
+      }
+    }
+  }, []);
 
   const addToast = (title: string, copy: string, type: "info" | "warning" | "error" | "success" = "info") => {
     const id = Math.random().toString(36).substring(2, 9);
@@ -122,50 +141,62 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     addToast("Model Registered", `${newModel.name} has been certified and added to registry.`, "success");
   };
 
-  const getRoleDashboardRoute = (r: UserRole) => {
-    switch (r) {
-      case "AI Security Engineer":
+  const getRoleDashboardRoute = (inputRole: string) => {
+    const internal = toInternalRole(inputRole);
+    switch (internal) {
+      case "AI_SECURITY_ENGINEER":
         return "/security/dashboard";
-      case "ML SecOps Lead":
+      case "ML_SECOPS_LEAD":
         return "/secops/dashboard";
-      case "Chief AI Risk Officer":
+      case "CHIEF_AI_RISK_OFFICER":
         return "/risk/dashboard";
-      case "Compliance Auditor":
+      case "COMPLIANCE_AUDITOR":
         return "/compliance/dashboard";
-      default:
-        return "/security/dashboard";
     }
   };
 
   const login = (email: string, inputRole?: string) => {
-    const validRole: UserRole = (inputRole as UserRole) || "AI Security Engineer";
+    const displayRole = toDisplayRole(inputRole || "AI Security Engineer");
+    const internalRole = toInternalRole(inputRole || "AI Security Engineer");
     const initials = email.substring(0, 2).toUpperCase();
     const nameFromEmail = email.split("@")[0].replace(".", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("modelsentinel-user-role", internalRole);
+    }
 
     setUser({
       name: nameFromEmail || "Mohit Kumar",
       email: email || "mohit@modelsentinel.demo",
-      role: validRole,
+      role: displayRole,
+      roleId: internalRole,
       organization: "Enterprise AI Security Lab",
       initials: initials || "MK",
     });
     setIsLoggedIn(true);
-    addToast("Welcome back!", `Signed in as ${validRole}`, "success");
+    addToast("Welcome back!", `Signed in as ${displayRole}`, "success");
   };
 
   const signup = (name: string, email: string, organization: string, inputRole: string) => {
-    const validRole: UserRole = (inputRole as UserRole) || "AI Security Engineer";
+    const displayRole = toDisplayRole(inputRole || "AI Security Engineer");
+    const internalRole = toInternalRole(inputRole || "AI Security Engineer");
     const parts = name.trim().split(" ");
     const initials = (parts[0]?.[0] || "M") + (parts[1]?.[0] || "K");
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("modelsentinel-user-role", internalRole);
+    }
+
     setUser({
       name: name || "Mohit Kumar",
       email: email || "mohit@modelsentinel.demo",
-      role: validRole,
+      role: displayRole,
+      roleId: internalRole,
       organization: organization || "CyberSec Labs",
       initials: initials.toUpperCase(),
     });
     setIsLoggedIn(true);
-    addToast("Account Created", `Registered as ${validRole}`, "success");
+    addToast("Account Created", `Registered as ${displayRole}`, "success");
   };
 
   const logout = () => {
@@ -173,30 +204,42 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     addToast("Signed out", "You have been logged out of your session.", "info");
   };
 
-  const switchRole = (newRole: UserRole) => {
-    setUser((prev) => ({ ...prev, role: newRole }));
-    addToast("Role Switched", `Switched to persona: ${newRole}`, "info");
-    const route = getRoleDashboardRoute(newRole);
+  const switchRole = (newRole: UserRole | InternalRole | string) => {
+    const displayRole = toDisplayRole(newRole);
+    const internalRole = toInternalRole(newRole);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("modelsentinel-user-role", internalRole);
+    }
+
+    setUser((prev) => ({ ...prev, role: displayRole, roleId: internalRole }));
+    addToast("Persona Switched", `Active persona: ${displayRole}`, "info");
+
+    const route = getRoleDashboardRoute(internalRole);
     router.push(route);
   };
 
   const can = (action: string): boolean => {
-    const r = user.role;
+    const r = user.roleId;
     switch (action) {
       case "suspend_model":
-        return r === "ML SecOps Lead";
+      case "contain_incident":
+        return r === "ML_SECOPS_LEAD";
       case "approve_risk_exception":
-        return r === "Chief AI Risk Officer";
+      case "approve_mitigation":
+        return r === "CHIEF_AI_RISK_OFFICER";
       case "run_security_probes":
-        return r === "AI Security Engineer" || r === "ML SecOps Lead";
-      case "modify_audit_records":
-        return false; // Immutable audit ledger
-      case "audit_controls":
-        return r === "Compliance Auditor" || r === "Chief AI Risk Officer";
+      case "run_security_test":
+        return r === "AI_SECURITY_ENGINEER" || r === "ML_SECOPS_LEAD";
+      case "verify_control":
+      case "start_audit":
+        return r === "COMPLIANCE_AUDITOR" || r === "CHIEF_AI_RISK_OFFICER";
       default:
         return true;
     }
   };
+
+  const roleData = getRoleDashboardData(user.roleId);
 
   return (
     <DemoContext.Provider
@@ -229,6 +272,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         logout,
         switchRole,
         can,
+        roleData,
       }}
     >
       {children}

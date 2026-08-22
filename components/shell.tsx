@@ -25,89 +25,97 @@ import {
   FileCheck2,
   LockKeyhole,
   Cpu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  UserRound,
+  SlidersHorizontal,
+  CheckCircle2,
+  CircleDot,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Brand } from "./brand";
 import { DemoBadge, ToastContainer, TrustScoreModal } from "./ui";
 import { CommandPalette } from "./command-palette";
 import { IncidentReportModal } from "./incident-report-modal";
 import { RegisterModelModal } from "./register-model-modal";
 import { useDemo, UserRole } from "./demo-provider";
+import { appNavigation, isNavigationActive } from "@/lib/navigation";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [roleSwitcherOpen, setRoleSwitcherOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notificationsRead, setNotificationsRead] = useState(false);
+  const [workspace, setWorkspace] = useState("AI Security Engineer");
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCollapsed(window.localStorage.getItem("modelsentinel-sidebar") === "collapsed");
+  }, []);
+
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!workspaceRef.current?.contains(target)) setRoleSwitcherOpen(false);
+      if (!notificationRef.current?.contains(target)) setNotificationsOpen(false);
+      if (!profileRef.current?.contains(target)) setUserMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setRoleSwitcherOpen(false);
+      setNotificationsOpen(false);
+      setUserMenuOpen(false);
+      setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  const toggleSidebar = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    window.localStorage.setItem("modelsentinel-sidebar", next ? "collapsed" : "expanded");
+  };
+
+  const handleMenuButton = () => {
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      setOpen(true);
+      return;
+    }
+    toggleSidebar();
+  };
 
   const { setCommandPaletteOpen, setRegisterModalOpen, stage, drifted, user, logout, switchRole } = useDemo();
 
+  useEffect(() => {
+    if (path === "/register") setRegisterModalOpen(true);
+  }, [path, setRegisterModalOpen]);
+
   const alertBadgeCount = stage === "alert" || drifted ? 1 : 0;
+
+  const openSearch = () => {
+    setRoleSwitcherOpen(false);
+    setNotificationsOpen(false);
+    setUserMenuOpen(false);
+    setCommandPaletteOpen(true);
+  };
 
   const handleSignOut = () => {
     logout();
     router.push("/login");
   };
 
-  // Role-specific navigation definitions
-  const getNavForRole = (role: UserRole) => {
-    switch (role) {
-      case "AI Security Engineer":
-        return [
-          ["Dashboard", "/security/dashboard", LayoutDashboard],
-          ["Models", "/models", Boxes],
-          ["Security Testing", "/playground", FlaskConical],
-          ["Drift Sentinel", "/monitoring", Activity],
-          ["Governance", "/governance", LockKeyhole],
-          ["Incidents", "/alerts", Bell],
-          ["Compare", "/compare", GitCompareArrows],
-        ] as const;
-
-      case "ML SecOps Lead":
-        return [
-          ["Command Center", "/secops/dashboard", Radio],
-          ["Production Monitoring", "/monitoring", Activity],
-          ["Models", "/models", Boxes],
-          ["Integrations", "/integrations", Cpu],
-          ["Incidents & Alerts", "/alerts", Bell],
-          ["Playground", "/playground", FlaskConical],
-          ["Compare", "/compare", GitCompareArrows],
-        ] as const;
-
-      case "Chief AI Risk Officer":
-        return [
-          ["Executive Dashboard", "/risk/dashboard", Sparkles],
-          ["Risk & Governance", "/governance", LockKeyhole],
-          ["Model Portfolio", "/models", Boxes],
-          ["Risk Monitoring", "/monitoring", Activity],
-          ["Alerts & Exposure", "/alerts", Bell],
-          ["Compare", "/compare", GitCompareArrows],
-        ] as const;
-
-      case "Compliance Auditor":
-        return [
-          ["Audit Dashboard", "/compliance/dashboard", FileCheck],
-          ["Audit Reports", "/audit", FileCheck2],
-          ["Models Under Audit", "/models", Boxes],
-          ["Audit Controls", "/monitoring", Activity],
-          ["Findings & Alerts", "/alerts", Bell],
-          ["Compare", "/compare", GitCompareArrows],
-        ] as const;
-
-      default:
-        return [
-          ["Dashboard", "/security/dashboard", LayoutDashboard],
-          ["Models", "/models", Boxes],
-          ["Monitoring", "/monitoring", Activity],
-          ["Playground", "/playground", FlaskConical],
-          ["Compare", "/compare", GitCompareArrows],
-          ["Alerts", "/alerts", Bell],
-        ] as const;
-    }
-  };
-
-  const nav = getNavForRole(user.role);
+  const nav = appNavigation(user.role);
 
   const getRoleBadgeStyle = (r: UserRole) => {
     switch (r) {
@@ -125,31 +133,41 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${collapsed ? "sidebar-collapsed" : ""}`}>
+      {open && (
+        <button
+          className="mobile-nav-backdrop"
+          aria-label="Close navigation"
+          onClick={() => setOpen(false)}
+        />
+      )}
       {/* Sidebar */}
-      <aside className={open ? "open" : ""}>
+      <aside className={open ? "open" : ""} aria-label="Primary navigation">
         <div className="side-head">
-          <Brand />
-          <button className="icon-btn mobile-only" onClick={() => setOpen(false)}>
+          <Brand compact={collapsed} />
+          <button aria-label="Close navigation" className="icon-btn mobile-only" onClick={() => setOpen(false)}>
             <X size={16} />
           </button>
+          <button aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="sidebar-collapse-btn desktop-only" onClick={toggleSidebar}>{collapsed?<PanelLeftOpen/>:<PanelLeftClose/>}</button>
         </div>
 
-        <div className="role-persona-banner">
+        <div className="role-persona-banner" title={user.role}>
           <span>ACTIVE PERSONA</span>
           <strong>{user.role}</strong>
         </div>
 
         <nav>
-          {nav.map(([n, h, I]) => (
+          {nav.slice(0,-1).map(({label:n,href:h,icon:I}) => (
             <Link
+              aria-label={n}
+              title={n}
               onClick={() => setOpen(false)}
-              className={path === h || path.startsWith(h + "/") ? "active" : ""}
+              className={isNavigationActive(path,h) ? "active" : ""}
               href={h}
               key={h}
             >
               <I size={17} />
-              {n}
+              <span className="nav-label">{n}</span>
               {n.includes("Alerts") && alertBadgeCount > 0 && <b className="alert-badge">{alertBadgeCount}</b>}
               {n.includes("Incidents") && alertBadgeCount > 0 && <b className="alert-badge">{alertBadgeCount}</b>}
             </Link>
@@ -157,16 +175,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="side-actions-box">
-          <button className="register-nav-btn" onClick={() => setRegisterModalOpen(true)}>
-            <PlusCircle size={15} /> Register Model
-          </button>
+          <Link title="Register Model" href="/register" className={`register-nav-btn ${path === "/register" ? "active" : ""}`} onClick={() => setOpen(false)}>
+            <PlusCircle size={15} /> <span className="nav-label">Register Model</span>
+          </Link>
         </div>
 
         <div className="side-bottom">
           <DemoBadge />
-          <Link href="/settings" className={path === "/settings" ? "active" : ""}>
+          <div className="active-persona-sidebar-tag">
+            <span>ACTIVE PERSONA</span>
+            <strong>{user.role.toUpperCase()}</strong>
+          </div>
+          <Link title="Settings" href="/settings" className={path === "/settings" ? "active" : ""}>
             <Settings size={17} />
-            Settings
+            <span className="nav-label">Settings</span>
           </Link>
 
           <div className="profile">
@@ -182,78 +204,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="app-main">
         <header className="topnav">
-          <button className="icon-btn mobile-only" onClick={() => setOpen(true)}>
-            <Menu size={18} />
+          <button
+            aria-label={collapsed ? "Open sidebar" : "Collapse sidebar"}
+            className="icon-btn mobile-menu-btn"
+            onClick={handleMenuButton}
+            title={collapsed ? "Open sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <Menu size={18} /> : <PanelLeftClose size={18} />}
           </button>
 
-          <div className="search clickable" onClick={() => setCommandPaletteOpen(true)}>
+          <div className="mobile-top-brand"><Brand /></div>
+
+          <button className="search clickable" aria-label="Search" onClick={openSearch} title="Search">
             <Search size={14} />
-            <span>Search models, alerts, fingerprints (Cmd+K)...</span>
+            <span>Search models, alerts, fingerprints...</span>
             <kbd>
               <Command size={10} /> K
             </kbd>
-          </div>
+          </button>
 
-          {/* Interactive Role Switcher Header Badge */}
-          <div className="role-switcher-header">
-            <button
-              className={`header-role-btn ${getRoleBadgeStyle(user.role)}`}
-              onClick={() => setRoleSwitcherOpen(!roleSwitcherOpen)}
-              title="Click to switch persona role"
-            >
-              <RefreshCw size={12} />
-              <span>{user.role.toUpperCase()}</span>
-              <ChevronDown size={12} />
-            </button>
-
-            {roleSwitcherOpen && (
-              <div className="role-switcher-dropdown" onClick={() => setRoleSwitcherOpen(false)}>
-                <div className="dropdown-title">SWITCH DEMO PERSONA</div>
-                {[
-                  { r: "AI Security Engineer", desc: "Technical model testing & drift forensics" },
-                  { r: "ML SecOps Lead", desc: "Production operations & incident containment" },
-                  { r: "Chief AI Risk Officer", desc: "Executive risk, business impact & governance" },
-                  { r: "Compliance Auditor", desc: "Control verification & evidence audit readiness" },
-                ].map(({ r, desc }) => (
-                  <button
-                    key={r}
-                    className={`role-dropdown-item ${user.role === r ? "active" : ""}`}
-                    onClick={() => switchRole(r as UserRole)}
-                  >
-                    <div>
-                      <strong>{r}</strong>
-                      <small>{desc}</small>
-                    </div>
-                    {user.role === r && <ShieldCheck size={14} className="text-green" />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           <div className="top-actions">
-            <button
+            <div className="nav-popover" ref={notificationRef}>
+            <button aria-label="Notifications"
               className="icon-btn action-badge-btn"
-              onClick={() => setCommandPaletteOpen(true)}
-              title="Open Notifications & Quick Search"
+              onClick={() => {setNotificationsOpen(!notificationsOpen);setUserMenuOpen(false);setRoleSwitcherOpen(false)}}
+              title="Notifications"
             >
               <Bell size={17} />
-              {alertBadgeCount > 0 && <i className="pulse-dot" />}
+              {alertBadgeCount > 0 && !notificationsRead && <i className="pulse-dot" />}
             </button>
+            {notificationsOpen && <div className="notification-panel"><div className="notification-head"><strong>Notifications</strong><button onClick={()=>setNotificationsRead(true)}>Mark all read</button></div>{[["critical","Possible Model Swap","Sentiment Pro · 2 minutes ago"],["warning","Latency degradation","VisionGuard · 18 minutes ago"],["resolved","FraudShield resolved","Returned to baseline · 1 hour ago"]].map(([level,title,meta])=><button key={title} onClick={()=>{setNotificationsOpen(false);router.push("/alerts")}}><i className={level}/><div><strong>{title}</strong><span>{meta}</span></div></button>)}<Link href="/alerts" onClick={()=>setNotificationsOpen(false)}>View all incidents →</Link></div>}
+            </div>
 
             <button
               className="button primary sm header-reg-btn"
-              onClick={() => setRegisterModalOpen(true)}
+              onClick={() => router.push("/register")}
+              title="Certify model"
             >
-              <PlusCircle size={14} /> Certify Model
+              <PlusCircle size={14} /><span className="certify-full">Certify Model</span><span className="certify-short">Certify</span>
             </button>
 
             {/* Profile Dropdown Menu */}
-            <div className="profile-menu-container">
-              <button
+            <div className="profile-menu-container" ref={profileRef}>
+              <button aria-label="Account"
                 className="avatar-btn"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                title="User Profile Menu"
+                onClick={() => {setUserMenuOpen(!userMenuOpen);setNotificationsOpen(false);setRoleSwitcherOpen(false)}}
+                title="Account"
               >
                 <span className="avatar">{user.initials}</span>
                 <ChevronDown size={12} className="avatar-arrow" />
@@ -262,17 +259,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               {userMenuOpen && (
                 <div className="user-dropdown-menu" onClick={() => setUserMenuOpen(false)}>
                   <div className="user-dropdown-header">
-                    <strong>{user.name}</strong>
-                    <small>{user.email}</small>
-                    <span className="user-role-badge">{user.role}</span>
+                    <div className="dropdown-avatar">{user.initials}</div><div><strong>{user.name}</strong><small>{user.role}</small></div>
                   </div>
                   <div className="user-dropdown-divider" />
                   <Link href="/settings" className="user-dropdown-item">
-                    <Settings size={14} /> Workspace Settings
+                    <UserRound size={14} /> Profile
+                  </Link>
+                  <Link href="/settings" className="user-dropdown-item">
+                    <SlidersHorizontal size={14} /> Preferences
+                  </Link>
+                  <Link href="/settings" className="user-dropdown-item">
+                    <Settings size={14} /> Settings
                   </Link>
                   <button className="user-dropdown-item danger" onClick={handleSignOut}>
                     <LogOut size={14} /> Sign Out
                   </button>
+                  <div className="demo-menu-label"><CircleDot size={11}/> Demo Environment</div>
                 </div>
               )}
             </div>

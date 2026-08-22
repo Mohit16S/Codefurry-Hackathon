@@ -81,6 +81,9 @@ export function IncidentReportModal() {
     <AnimatePresence>
       <div className="modal-overlay" onClick={() => setReportModalOpen(false)}>
         <motion.div
+          role="dialog"
+          aria-modal="true"
+          aria-label="AI incident audit report"
           className="modal-card incident-report-modal"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -99,7 +102,7 @@ export function IncidentReportModal() {
               <button className="button secondary sm" onClick={handlePrint}>
                 <Printer size={14} /> Print / Export PDF
               </button>
-              <button className="icon-btn" onClick={() => setReportModalOpen(false)}>
+              <button aria-label="Close incident report" className="icon-btn" onClick={() => setReportModalOpen(false)}>
                 <X size={16} />
               </button>
             </div>

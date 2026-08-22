@@ -83,7 +83,7 @@ export function TrustScoreModal() {
               <ShieldCheck className="text-blue" size={16} />
               <span>TRUST SCORE METHODOLOGY & AUDIT</span>
             </div>
-            <button className="icon-btn" onClick={() => setTrustModalOpen(false)}>
+            <button aria-label="Close trust score details" className="icon-btn" onClick={() => setTrustModalOpen(false)}>
               <X size={16} />
             </button>
           </div>
@@ -163,7 +163,7 @@ export function ToastContainer() {
               <strong>{toast.title}</strong>
               <p>{toast.copy}</p>
             </div>
-            <button className="toast-close" onClick={() => removeToast(toast.id)}>
+            <button aria-label={`Dismiss ${toast.title}`} className="toast-close" onClick={() => removeToast(toast.id)}>
               <X size={12} />
             </button>
           </motion.div>

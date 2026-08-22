@@ -1,406 +1,70 @@
 "use client";
 
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, ShieldCheck, ArrowRight, ArrowLeft, Loader2, Sparkles, Check } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, BrainCircuit, Check, CheckCircle2, CircleDot, Gauge, Loader2, Network, ScanSearch, ShieldCheck, Sparkles, TestTube2, X } from "lucide-react";
 import { useDemo } from "./demo-provider";
-import { Model } from "@/lib/data";
+import type { Model } from "@/lib/data";
+
+const steps = ["Info", "Endpoint", "Version", "Probes", "Monitor"];
+const probeOptions = [
+  ["Accuracy", "Evaluate expected task performance."], ["Robustness", "Test behavior under input variation."],
+  ["Safety", "Evaluate unsafe or harmful requests."], ["Prompt Injection", "Test instruction manipulation."],
+  ["Hallucination", "Evaluate unsupported claims."], ["Bias", "Check consistency across demographic variations."],
+] as const;
 
 export function RegisterModelModal() {
+  const router = useRouter(); const pathname = usePathname();
   const { registerModalOpen, setRegisterModalOpen, registerModel } = useDemo();
-  const [step, setStep] = useState(1);
-  const [runningProbes, setRunningProbes] = useState(false);
-  const [completedModel, setCompletedModel] = useState<Model | null>(null);
+  const [step, setStep] = useState(1); const [furthestStep, setFurthestStep] = useState(1); const [submitted, setSubmitted] = useState(false);
+  const [runningCertification, setRunningCertification] = useState(false); const [completedModel, setCompletedModel] = useState<Model | null>(null);
+  const [connectionState, setConnectionState] = useState<"idle" | "testing" | "success">("idle");
+  const [probeState, setProbeState] = useState<"idle" | "running" | "complete">("idle"); const [probeProgress, setProbeProgress] = useState(0);
+  const [name, setName] = useState(""); const [creator, setCreator] = useState(""); const [category, setCategory] = useState("NLP · Classification"); const [description, setDescription] = useState("");
+  const [endpoint, setEndpoint] = useState(""); const [apiType, setApiType] = useState("OpenAI-compatible"); const [version, setVersion] = useState("3.2");
+  const [releaseDate, setReleaseDate] = useState("2026-08-22"); const [provider, setProvider] = useState(""); const [environment, setEnvironment] = useState("Production");
+  const [selectedProbes, setSelectedProbes] = useState<string[]>(probeOptions.map(([title]) => title)); const [threshold, setThreshold] = useState("95"); const [scanFreq, setScanFreq] = useState("15m");
 
-  // Form State
-  const [name, setName] = useState("");
-  const [creator, setCreator] = useState("");
-  const [category, setCategory] = useState("NLP · Classification");
-  const [endpoint, setEndpoint] = useState("");
-  const [version, setVersion] = useState("v1.0");
-  const [scanFreq, setScanFreq] = useState("5m");
-  const [description, setDescription] = useState("");
+  const errors = useMemo(() => { if (!submitted) return {} as Record<string, string>; const next: Record<string, string> = {};
+    if (step === 1) { if (!name.trim()) next.name = "Enter a model name to continue."; if (!creator.trim()) next.creator = "Enter the creator or vendor."; }
+    if (step === 2) { if (!endpoint.trim()) next.endpoint = "Enter the model endpoint URL."; else try { const parsed = new URL(endpoint); if (!["http:", "https:"].includes(parsed.protocol)) throw new Error(); } catch { next.endpoint = "Enter a valid HTTP or HTTPS endpoint."; } }
+    if (step === 3) { if (!version.trim()) next.version = "Enter the model version."; if (!provider.trim()) next.provider = "Enter the model provider."; } return next;
+  }, [submitted, step, name, creator, endpoint, version, provider]);
 
+  const resetWizard = () => { setStep(1); setFurthestStep(1); setSubmitted(false); setRunningCertification(false); setCompletedModel(null); setConnectionState("idle"); setProbeState("idle"); setProbeProgress(0); setName(""); setCreator(""); setDescription(""); setEndpoint(""); setProvider(""); setSelectedProbes(probeOptions.map(([title]) => title)); };
+  const closeWizard = () => { setRegisterModalOpen(false); resetWizard(); if (pathname === "/register") { if (window.history.length > 1) router.back(); else router.push("/dashboard"); } };
+  useEffect(() => { if (!registerModalOpen) return; const oldOverflow = document.body.style.overflow; document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && closeWizard(); window.addEventListener("keydown", closeOnEscape);
+    return () => { window.removeEventListener("keydown", closeOnEscape); document.body.style.overflow = oldOverflow; };
+  });
   if (!registerModalOpen) return null;
 
-  const handleNext = () => {
-    if (step < 5) {
-      setStep(step + 1);
-    } else {
-      startCertification();
-    }
-  };
+  const advance = () => { setSubmitted(true); let invalidEndpoint = false; if (step === 2) { try { const parsed = new URL(endpoint); invalidEndpoint = !["http:", "https:"].includes(parsed.protocol); } catch { invalidEndpoint = true; } } const invalid = (step === 1 && (!name.trim() || !creator.trim())) || (step === 2 && invalidEndpoint) || (step === 3 && (!version.trim() || !provider.trim())); if (invalid || (step === 4 && probeState !== "complete")) return; const next = Math.min(5, step + 1); setStep(next); setFurthestStep((current) => Math.max(current, next)); setSubmitted(false); };
+  const goBack = () => { setSubmitted(false); setStep((current) => Math.max(1, current - 1)); };
+  const testConnection = () => { setSubmitted(true); if (!endpoint.trim()) return; try { new URL(endpoint); } catch { return; } setConnectionState("testing"); window.setTimeout(() => setConnectionState("success"), 1100); };
+  const runProbes = () => { if (!selectedProbes.length) return; setProbeState("running"); setProbeProgress(0); let current = 0; const timer = window.setInterval(() => { current += 1; setProbeProgress(current); if (current >= selectedProbes.length) { window.clearInterval(timer); setProbeState("complete"); } }, 260); };
+  const certify = () => { setRunningCertification(true); window.setTimeout(() => { const id = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-") || "certified-model"; const fingerprintId = `fp_${Math.random().toString(36).slice(2, 14)}`; const hash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+    const model: Model = { id, name, creator, category, trust: 94, accuracy: "96.4%", latency: "83ms", cost: "$0.002", verified: true, status: "Healthy", version, provider, endpoint, fingerprintId, hash, riskLevel: "Low", certDate: "Just now", lastScan: "Just now", description: description || "Certified AI endpoint protected by ModelSentinel continuous runtime assurance.", certifiedMetrics: { accuracy: 96, consistency: 98, robustness: 92, safety: 95, bias: 88, reliability: 96, latency: 94, responseStyle: 95 }, currentMetrics: { accuracy: 96, consistency: 98, robustness: 92, safety: 95, bias: 88, reliability: 96, latency: 94, responseStyle: 95 }, versions: [{ version, status: "Certified", date: "Just now", fingerprintId, similarity: 98.7, notes: "Initial certified baseline" }] };
+    registerModel(model); setCompletedModel(model); setRunningCertification(false); }, 1800); };
+  const viewPassport = () => { if (!completedModel) return; const modelId = completedModel.id; setRegisterModalOpen(false); resetWizard(); router.push(`/models/${modelId}`); };
+  const toggleProbe = (title: string) => setSelectedProbes((current) => current.includes(title) ? current.filter((item) => item !== title) : [...current, title]);
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
-  };
-
-  const startCertification = () => {
-    setRunningProbes(true);
-    setTimeout(() => {
-      const generatedId = name.toLowerCase().replace(/\s+/g, "-") || "custom-model";
-      const fingerprint = "fp_" + Math.random().toString(36).substring(2, 14);
-      const shaHash = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
-
-      const newModel: Model = {
-        id: generatedId,
-        name: name || "Custom Security LLM",
-        creator: creator || "Internal AI Lab",
-        category: category,
-        trust: 95,
-        accuracy: "96.8%",
-        latency: "76ms",
-        cost: "$0.003",
-        verified: true,
-        status: "Healthy",
-        version: version || "v1.0",
-        provider: "Enterprise Private Cloud",
-        endpoint: endpoint || "https://api.internal.ai/v1/predict",
-        fingerprintId: fingerprint,
-        hash: shaHash,
-        riskLevel: "Low",
-        certDate: "Just Now",
-        lastScan: "Just Now",
-        description: description || "Newly registered certified AI model endpoint continuously monitored by Sentinel.",
-        certifiedMetrics: {
-          accuracy: 97,
-          consistency: 96,
-          robustness: 94,
-          safety: 98,
-          bias: 92,
-          reliability: 96,
-          latency: 95,
-          responseStyle: 96,
-        },
-        currentMetrics: {
-          accuracy: 97,
-          consistency: 96,
-          robustness: 94,
-          safety: 98,
-          bias: 92,
-          reliability: 96,
-          latency: 95,
-          responseStyle: 96,
-        },
-        versions: [{ version: version || "v1.0", status: "Certified", date: "Just Now", fingerprintId: fingerprint, similarity: 99.4, notes: "Initial certification baseline" }],
-      };
-
-      setCompletedModel(newModel);
-      registerModel(newModel);
-      setRunningProbes(false);
-    }, 2500);
-  };
-
-  const handleFinish = () => {
-    setRegisterModalOpen(false);
-    setStep(1);
-    setCompletedModel(null);
-  };
-
-  const stepsList = [
-    { num: "01", title: "Info" },
-    { num: "02", title: "Endpoint" },
-    { num: "03", title: "Version" },
-    { num: "04", title: "Probes" },
-    { num: "05", title: "Monitor" },
-  ];
-
-  return (
-    <AnimatePresence>
-      <div className="modal-overlay" onClick={() => setRegisterModalOpen(false)}>
-        <motion.div
-          className="modal-wizard-card"
-          initial={{ opacity: 0, scale: 0.96, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 20 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="modal-wizard-header">
-            <h2>
-              <ShieldCheck className="text-blue" size={20} />
-              <span>MODEL CERTIFICATION WIZARD</span>
-            </h2>
-            <button className="icon-btn" onClick={() => setRegisterModalOpen(false)}>
-              <X size={16} />
-            </button>
-          </div>
-
-          {!runningProbes && !completedModel && (
-            <>
-              {/* 12. Visual Stepper Header */}
-              <div className="wizard-stepper-bar">
-                {stepsList.map((st, i) => {
-                  const stepNum = i + 1;
-                  const isActive = step === stepNum;
-                  const isCompleted = step > stepNum;
-                  return (
-                    <React.Fragment key={st.num}>
-                      <div
-                        className={`stepper-step ${isActive ? "active" : isCompleted ? "completed" : ""}`}
-                        onClick={() => setStep(stepNum)}
-                      >
-                        <div className="step-circle">
-                          {isCompleted ? <Check size={14} /> : st.num}
-                        </div>
-                        <span className="step-title">{st.title}</span>
-                      </div>
-                      {i < stepsList.length - 1 && (
-                        <div className={`stepper-line ${isCompleted ? "completed" : ""}`} />
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-
-              {/* 13. Certification Form Grid */}
-              <div className="wizard-form-body">
-                {step === 1 && (
-                  <div className="wizard-step-content">
-                    <h2>Step 1 — Model Information</h2>
-                    <p className="text-muted text-xs mb-4">Enter general identification metadata for the AI model to be certified.</p>
-                    
-                    <div className="wizard-grid-2">
-                      <div className="form-field-group">
-                        <label className="field-label">Model Name</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. RiskGuard Pro"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-field-group">
-                        <label className="field-label">Creator / Vendor</label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Aegis AI Solutions"
-                          value={creator}
-                          onChange={(e) => setCreator(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-field-group mt-3">
-                      <label className="field-label">Category</label>
-                      <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                        <option value="NLP · Classification">NLP · Classification</option>
-                        <option value="LLM · Generative Support">LLM · Generative Support</option>
-                        <option value="Vision · Content Moderation">Vision · Content Moderation</option>
-                        <option value="Risk & Fraud Detection">Risk & Fraud Detection</option>
-                        <option value="Legal & Document Extraction">Legal & Document Extraction</option>
-                      </select>
-                    </div>
-
-                    <div className="form-field-group mt-3">
-                      <label className="field-label">Description</label>
-                      <textarea
-                        rows={3}
-                        placeholder="Brief summary of workload purpose and evaluation targets..."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {step === 2 && (
-                  <div className="wizard-step-content">
-                    <h2>Step 2 — Production Endpoint</h2>
-                    <p className="text-muted text-xs mb-4">Configure the API target endpoint for real-time behavioral probing.</p>
-                    
-                    <div className="form-field-group">
-                      <label className="field-label">Target API Endpoint URL</label>
-                      <input
-                        type="text"
-                        placeholder="https://api.yourdomain.com/v1/predict"
-                        value={endpoint}
-                        onChange={(e) => setEndpoint(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="wizard-grid-2 mt-3">
-                      <div className="form-field-group">
-                        <label className="field-label">Hosting Infrastructure</label>
-                        <input type="text" defaultValue="AWS us-west-2 (Dedicated Cluster)" />
-                      </div>
-                      <div className="form-field-group">
-                        <label className="field-label">Authentication Type</label>
-                        <select defaultValue="Bearer Token">
-                          <option value="Bearer Token">Bearer Token / API Key</option>
-                          <option value="mTLS Certificate">mTLS Certificate</option>
-                          <option value="AWS IAM SigV4">AWS IAM SigV4</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {step === 3 && (
-                  <div className="wizard-step-content">
-                    <h2>Step 3 — Baseline Versioning</h2>
-                    <p className="text-muted text-xs mb-4">Define version numbers and baseline release benchmarks.</p>
-                    
-                    <div className="wizard-grid-2">
-                      <div className="form-field-group">
-                        <label className="field-label">Release Version</label>
-                        <input
-                          type="text"
-                          placeholder="v1.0"
-                          value={version}
-                          onChange={(e) => setVersion(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-field-group">
-                        <label className="field-label">Architecture Baseline</label>
-                        <input type="text" defaultValue="Transformer 7B (Quantized FP16)" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {step === 4 && (
-                  <div className="wizard-step-content">
-                    <h2>Step 4 — Behavioral Certification Probes</h2>
-                    <p className="text-muted text-xs mb-4">Select automated probe suites to execute during baseline certification.</p>
-                    
-                    <div className="secops-actions-list">
-                      <label className="secops-action-btn">
-                        <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
-                        <div>
-                          <strong>Prompt Injection & Jailbreak Resistance (1,240 probes)</strong>
-                          <small>Verify instruction boundary protection against jailbreaks</small>
-                        </div>
-                      </label>
-                      <label className="secops-action-btn">
-                        <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
-                        <div>
-                          <strong>Demographic Bias & Fairness Audit (840 probes)</strong>
-                          <small>Measure classification parity across demographic cohorts</small>
-                        </div>
-                      </label>
-                      <label className="secops-action-btn">
-                        <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
-                        <div>
-                          <strong>Output Consistency & Response Style (5,400 probes)</strong>
-                          <small>Fingerprint lexical density and classification boundaries</small>
-                        </div>
-                      </label>
-                      <label className="secops-action-btn">
-                        <input type="checkbox" defaultChecked style={{ width: 16, height: 16 }} />
-                        <div>
-                          <strong>Hallucination Boundary Verification (2,000 probes)</strong>
-                          <small>Validate factual assertions against ground truth</small>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {step === 5 && (
-                  <div className="wizard-step-content">
-                    <h2>Step 5 — Continuous Monitoring Settings</h2>
-                    <p className="text-muted text-xs mb-4">Configure automated verification scan frequencies and alert triggers.</p>
-                    
-                    <div className="wizard-grid-2">
-                      <div className="form-field-group">
-                        <label className="field-label">Scan Frequency</label>
-                        <select value={scanFreq} onChange={(e) => setScanFreq(e.target.value)}>
-                          <option value="1m">Continuous (Every 1 minute)</option>
-                          <option value="5m">High Sensitivity (Every 5 minutes)</option>
-                          <option value="15m">Standard (Every 15 minutes)</option>
-                          <option value="1h">Hourly Batch (Every 1 hour)</option>
-                        </select>
-                      </div>
-                      <div className="form-field-group">
-                        <label className="field-label">Drift Alert Threshold</label>
-                        <select defaultValue="5%">
-                          <option value="5%">Strict (Alert on &gt;5% deviation)</option>
-                          <option value="10%">Standard (Alert on &gt;10% deviation)</option>
-                          <option value="20%">Relaxed (Alert on &gt;20% deviation)</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 14. Next Step Button Bottom Right */}
-              <div className="wizard-footer">
-                {step > 1 ? (
-                  <button className="button secondary" onClick={handleBack}>
-                    <ArrowLeft size={14} /> Back
-                  </button>
-                ) : (
-                  <div />
-                )}
-
-                <button className="button primary" onClick={handleNext}>
-                  {step === 5 ? (
-                    <>
-                      <Sparkles size={14} /> Run Baseline Certification
-                    </>
-                  ) : (
-                    <>
-                      Next Step <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </div>
-            </>
-          )}
-
-          {runningProbes && (
-            <div className="certification-running">
-              <Loader2 className="spinner-lg text-blue" size={48} />
-              <h2>Executing Baseline Certification Probes...</h2>
-              <p>Evaluating 12,480 response dimensions across safety, bias, and robustness.</p>
-              <div className="cert-progress-steps">
-                <div className="cert-step active">✔ Connecting to endpoint API</div>
-                <div className="cert-step active">✔ Running 12,480 adversarial probes</div>
-                <div className="cert-step active">✔ Generating behavioral radar fingerprint</div>
-                <div className="cert-step active">✔ Cryptographically hashing SHA-256 signature</div>
-              </div>
-            </div>
-          )}
-
-          {completedModel && (
-            <div className="certification-success">
-              <div className="success-icon-wrap">
-                <CheckCircle2 size={56} className="text-green" />
-              </div>
-              <span className="badge-certified">CERTIFIED BASELINE GENERATED</span>
-              <h2>{completedModel.name} is Certified!</h2>
-              <p>ModelSentinel has verified behavioral baseline and saved SHA-256 fingerprint signature.</p>
-
-              <div className="cert-result-card">
-                <div className="cert-row">
-                  <span>FINGERPRINT ID</span>
-                  <code>{completedModel.fingerprintId}</code>
-                </div>
-                <div className="cert-row">
-                  <span>SHA-256 BASELINE HASH</span>
-                  <code>{completedModel.hash.slice(0, 32)}...</code>
-                </div>
-                <div className="cert-row">
-                  <span>TRUST SCORE</span>
-                  <strong className="text-green">{completedModel.trust} / 100</strong>
-                </div>
-                <div className="cert-row">
-                  <span>STATUS</span>
-                  <span className="badge-pass">● PASS · CERTIFIED</span>
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button className="button primary large w-full" onClick={handleFinish}>
-                  View Certified Model Passport
-                </button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      </div>
-    </AnimatePresence>
-  );
+  return <AnimatePresence><motion.div className="modal-overlay certification-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={closeWizard}>
+    <motion.section className="cert-wizard" role="dialog" aria-modal="true" aria-label="Model certification wizard" initial={{ opacity: 0, y: 18, scale: .985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 12, scale: .99 }} transition={{ duration: .22 }} onMouseDown={(event) => event.stopPropagation()}>
+      <header className="cert-header"><div className="cert-title-lockup"><span className="cert-shield"><ShieldCheck size={20} /></span><div><span>MODEL CERTIFICATION WIZARD</span><h1>Certify an AI model before trusting it.</h1><p>Certify and continuously monitor an AI model before trusting it in production.</p></div></div><div className="cert-header-actions"><span>5-STEP VERIFICATION WORKFLOW</span><button className="cert-close" aria-label="Close certification wizard" onClick={closeWizard}><X size={18} /></button></div></header>
+      {!runningCertification && !completedModel && <><div className="cert-mobile-progress"><span>STEP {step} OF 5</span><strong>{steps[step - 1]}</strong></div><nav className="cert-stepper" aria-label="Certification progress">{steps.map((label, index) => { const number = index + 1, complete = number < step, active = number === step; return <React.Fragment key={label}><button type="button" className={`${active ? "active" : ""} ${complete ? "complete" : ""}`} disabled={number > furthestStep} onClick={() => { setStep(number); setSubmitted(false); }} aria-current={active ? "step" : undefined}><span>{complete ? <Check size={14} /> : String(number).padStart(2, "0")}</span><strong>{label}</strong></button>{index < 4 && <i className={complete ? "complete" : ""} />}</React.Fragment>; })}</nav>
+        <div className="cert-form-shell"><AnimatePresence mode="wait"><motion.div key={step} className="cert-step-content" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: .2 }}>
+          {step === 1 && <><StepHeading icon={<BrainCircuit />} title="Step 1 — Model Information" copy="Enter general identification metadata for the AI model to be certified." /><div className="cert-form-width"><div className="cert-two-col"><Field label="Model Name" id="cert-name" error={errors.name}><input id="cert-name" value={name} placeholder="e.g. RiskGuard Pro" onChange={(e) => setName(e.target.value)} aria-invalid={Boolean(errors.name)} /></Field><Field label="Creator / Vendor" id="cert-creator" error={errors.creator}><input id="cert-creator" value={creator} placeholder="e.g. Aegis AI Solutions" onChange={(e) => setCreator(e.target.value)} aria-invalid={Boolean(errors.creator)} /></Field></div><Field label="Category" id="cert-category"><select id="cert-category" value={category} onChange={(e) => setCategory(e.target.value)}>{["NLP · Classification", "NLP · Generation", "Vision", "Audio", "Recommendation", "Fraud Detection", "Other"].map((item) => <option key={item}>{item}</option>)}</select></Field><Field label="Description" id="cert-description" hint="Optional"><textarea id="cert-description" rows={3} value={description} placeholder="Brief summary of workload purpose and evaluation targets..." onChange={(e) => setDescription(e.target.value)} /></Field></div></>}
+          {step === 2 && <><StepHeading icon={<Network />} title="Step 2 — Model Endpoint" copy="Connect the endpoint that ModelSentinel will evaluate and monitor." /><div className="cert-form-width"><div className="demo-environment-note"><CircleDot size={14} /><div><strong>Demo Environment</strong><span>No credentials are stored. Connection results are simulated locally.</span></div></div><Field label="Endpoint URL" id="cert-endpoint" error={errors.endpoint}><input id="cert-endpoint" type="url" value={endpoint} placeholder="https://api.example.com/v1/predict" onChange={(e) => { setEndpoint(e.target.value); setConnectionState("idle"); }} aria-invalid={Boolean(errors.endpoint)} /></Field><div className="cert-two-col"><Field label="API Type" id="cert-api-type"><select id="cert-api-type" value={apiType} onChange={(e) => setApiType(e.target.value)}><option>REST</option><option>OpenAI-compatible</option><option>Custom</option></select></Field><Field label="Authentication" id="cert-auth"><input id="cert-auth" value="Demo endpoint — no credentials" disabled readOnly /></Field></div><button className="button secondary cert-test-button" onClick={testConnection} disabled={connectionState === "testing"}>{connectionState === "testing" ? <><Loader2 className="cert-spin" /> Testing endpoint…</> : <><TestTube2 /> Test Connection</>}</button>{connectionState === "success" && <div className="connection-results">{["Endpoint reachable", "Response received", "Response format valid"].map((item) => <span key={item}><CheckCircle2 />{item}</span>)}</div>}</div></>}
+          {step === 3 && <><StepHeading icon={<ScanSearch />} title="Step 3 — Model Version" copy="Identify the release that will become the certified behavioral baseline." /><div className="cert-form-width"><div className="cert-two-col"><Field label="Version" id="cert-version" error={errors.version}><input id="cert-version" value={version} placeholder="3.2" onChange={(e) => setVersion(e.target.value)} aria-invalid={Boolean(errors.version)} /></Field><Field label="Release Date" id="cert-release"><input id="cert-release" type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} /></Field><Field label="Model Provider" id="cert-provider" error={errors.provider}><input id="cert-provider" value={provider} placeholder="e.g. NeuralForge" onChange={(e) => setProvider(e.target.value)} aria-invalid={Boolean(errors.provider)} /></Field><Field label="Deployment Environment" id="cert-environment"><select id="cert-environment" value={environment} onChange={(e) => setEnvironment(e.target.value)}><option>Development</option><option>Staging</option><option>Production</option></select></Field></div><div className="cert-info-card"><ShieldCheck /><p><strong>Certified baseline</strong>ModelSentinel uses this exact version as the reference for future behavioral comparisons.</p></div></div></>}
+          {step === 4 && <><StepHeading icon={<TestTube2 />} title="Step 4 — Verification Probes" copy="Select the tests used to establish the model’s behavioral fingerprint." /><div className="probe-choice-grid">{probeOptions.map(([title, copy]) => { const selected = selectedProbes.includes(title); return <button type="button" key={title} className={selected ? "selected" : ""} onClick={() => toggleProbe(title)}><span>{selected ? <Check /> : null}</span><div><strong>{title}</strong><p>{copy}</p></div></button>; })}</div><div className="probe-run-panel"><button className="button primary" onClick={runProbes} disabled={!selectedProbes.length || probeState === "running"}>{probeState === "running" ? <><Loader2 className="cert-spin" />Running verification…</> : probeState === "complete" ? <><CheckCircle2 />Verification Complete</> : <><Sparkles />Run Verification</>}</button><div><span>{probeProgress} / {selectedProbes.length} probes complete</span><i><b style={{ width: `${selectedProbes.length ? (probeProgress / selectedProbes.length) * 100 : 0}%` }} /></i></div></div>{probeState === "complete" && <div className="probe-pass-row">{selectedProbes.map((item) => <span key={item}><Check />{item}</span>)}</div>}</>}
+          {step === 5 && <><StepHeading icon={<Gauge />} title="Step 5 — Continuous Monitoring" copy="Your certified behavioral fingerprint becomes the baseline used by Drift Sentinel." /><div className="monitor-layout"><div className="fingerprint-preview"><div className="fingerprint-bars">{[38,72,50,88,60,96,44,78,57,91,66,83].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div><span>BEHAVIORAL FINGERPRINT PREVIEW</span><code>fp_generated_after_certification</code><div><p>Similarity baseline<strong>98.7%</strong></p><p>Trust Score<strong>94 / 100</strong></p></div></div><div className="monitor-settings"><Field label="Behavioral Similarity Threshold" id="cert-threshold"><div className="input-suffix"><input id="cert-threshold" value={threshold} onChange={(e) => setThreshold(e.target.value)} /><span>%</span></div></Field><Field label="Check Frequency" id="cert-frequency"><select id="cert-frequency" value={scanFreq} onChange={(e) => setScanFreq(e.target.value)}><option value="5m">Every 5 minutes</option><option value="15m">Every 15 minutes</option><option value="1h">Every hour</option></select></Field><div className="monitor-enabled"><CheckCircle2 /><div><strong>Continuous monitoring enabled</strong><span>Drift Sentinel will compare live behavior against this baseline.</span></div></div></div></div><div className="ready-summary"><span>READY TO CERTIFY</span><div>{[["Model", name], ["Creator", creator], ["Version", version], ["Verification", `${selectedProbes.length} / ${selectedProbes.length} probes`], ["Trust Score", "94 / 100"], ["Monitoring", "Enabled"]].map(([label, value]) => <p key={label}><small>{label}</small><strong>{value}</strong></p>)}</div></div></>}
+        </motion.div></AnimatePresence><footer className="cert-footer">{step > 1 ? <button className="button secondary" onClick={goBack}><ArrowLeft />Back</button> : <span />}{step < 5 ? <button className="button primary" onClick={advance} disabled={step === 4 && probeState !== "complete"}>Next Step<ArrowRight /></button> : <button className="button primary certify-final" onClick={certify}><ShieldCheck />Certify Model</button>}</footer></div></>}
+      {runningCertification && <div className="cert-processing"><div className="cert-processing-orbit"><ShieldCheck /><i /></div><span>ESTABLISHING CERTIFIED BASELINE</span><h2>Certifying {name}…</h2><p>Hashing probe results, generating the behavioral fingerprint, and enabling Drift Sentinel.</p><div>{["Verification complete", "Behavioral fingerprint generated", "Monitoring enabled"].map((item, index) => <span key={item} style={{ animationDelay: `${index * .35}s` }}><CheckCircle2 />{item}</span>)}</div></div>}
+      {completedModel && <div className="cert-success"><div className="cert-success-icon"><CheckCircle2 /></div><span>MODEL CERTIFIED</span><h2>{completedModel.name} is protected by ModelSentinel.</h2><p>Verification is complete, its behavioral fingerprint is recorded, and continuous monitoring is enabled.</p><div className="cert-success-grid"><p><small>TRUST SCORE</small><strong>94 / 100</strong></p><p><small>FINGERPRINT</small><code>{completedModel.fingerprintId}</code></p><p><small>MONITORING</small><strong>Enabled</strong></p></div><button className="button primary large" onClick={viewPassport}>View Model Passport<ArrowRight /></button></div>}
+    </motion.section></motion.div></AnimatePresence>;
 }
+
+function StepHeading({ icon, title, copy }: { icon: React.ReactNode; title: string; copy: string }) { return <div className="cert-step-heading"><span>{icon}</span><div><h2>{title}</h2><p>{copy}</p></div></div>; }
+function Field({ label, id, error, hint, children }: { label: string; id: string; error?: string; hint?: string; children: React.ReactNode }) { return <div className="cert-field"><label htmlFor={id}>{label}{hint && <small>{hint}</small>}</label>{children}{error && <span className="cert-error" role="alert">{error}</span>}</div>; }

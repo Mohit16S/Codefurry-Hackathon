@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useDemo, UserRole } from "@/components/demo-provider";
+import { useDemo } from "@/components/demo-provider";
+import { toInternalRole } from "@/lib/role-data";
 import SecurityEngineerDashboard from "../security/dashboard/page";
 import SecOpsDashboard from "../secops/dashboard/page";
 import RiskOfficerDashboard from "../risk/dashboard/page";
@@ -11,37 +12,36 @@ import ComplianceAuditorDashboard from "../compliance/dashboard/page";
 export default function DashboardRouterPage() {
   const { user } = useDemo();
   const router = useRouter();
+  const internalRole = user.roleId || toInternalRole(user.role);
 
-  // Optionally keep URL synced or render role-specific dashboard directly
   useEffect(() => {
-    switch (user.role) {
-      case "AI Security Engineer":
+    switch (internalRole) {
+      case "AI_SECURITY_ENGINEER":
         router.replace("/security/dashboard");
         break;
-      case "ML SecOps Lead":
+      case "ML_SECOPS_LEAD":
         router.replace("/secops/dashboard");
         break;
-      case "Chief AI Risk Officer":
+      case "CHIEF_AI_RISK_OFFICER":
         router.replace("/risk/dashboard");
         break;
-      case "Compliance Auditor":
+      case "COMPLIANCE_AUDITOR":
         router.replace("/compliance/dashboard");
         break;
       default:
         router.replace("/security/dashboard");
         break;
     }
-  }, [user.role, router]);
+  }, [internalRole, router]);
 
-  // Render direct fallback matching role
-  switch (user.role) {
-    case "AI Security Engineer":
+  switch (internalRole) {
+    case "AI_SECURITY_ENGINEER":
       return <SecurityEngineerDashboard />;
-    case "ML SecOps Lead":
+    case "ML_SECOPS_LEAD":
       return <SecOpsDashboard />;
-    case "Chief AI Risk Officer":
+    case "CHIEF_AI_RISK_OFFICER":
       return <RiskOfficerDashboard />;
-    case "Compliance Auditor":
+    case "COMPLIANCE_AUDITOR":
       return <ComplianceAuditorDashboard />;
     default:
       return <SecurityEngineerDashboard />;
