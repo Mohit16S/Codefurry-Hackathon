@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AppShell } from "@/components/shell";
 import { Button, StatusBadge } from "@/components/ui";
 import { DriftChart, ModelRadar } from "@/components/charts";
-import { healthyChart, driftChart, hash, rootCauseAnalysis } from "@/lib/data";
+import { healthyChart, driftChart, hash, rootCauseAnalysis, businessImpact } from "@/lib/data";
 import { useDemo } from "@/components/demo-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,6 +26,9 @@ import {
   ShieldAlert,
   Download,
   Info,
+  IndianRupee,
+  UsersRound,
+  Gauge,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -48,6 +51,18 @@ export default function Monitoring() {
           {isCritical ? "CRITICAL DRIFT DETECTED" : "ALL SYSTEMS OPERATIONAL"}
         </div>
       </div>
+
+      <AnimatePresence>
+        {(stage === "changed" || stage === "probing") && (
+          <motion.section className="swap-sequence" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: .98 }}>
+            <div className="sequence-head"><span className="spinner"/><div><span>LIVE VERIFICATION SEQUENCE</span><h2>{stage === "changed" ? "Production endpoint version changed" : "Re-running certified probe suite"}</h2></div><b>{stage === "changed" ? "STAGE 1 / 3" : "STAGE 2 / 3"}</b></div>
+            <div className="sequence-steps">
+              {["Classification", "Robustness", "Safety", "Response consistency", "Behavioral fingerprint"].map((item,index)=><div className={stage === "probing" || index < 2 ? "complete" : ""} key={item}>{stage === "probing" || index < 2 ? <CheckCircle2/> : <span/>}<b>{item}</b><small>{stage === "probing" || index < 2 ? "Probe complete" : "Queued"}</small></div>)}
+            </div>
+            <div className="similarity-drop"><span>98.7%</span><ArrowRight/><span>94.2%</span><ArrowRight/><span>88.1%</span><ArrowRight/><span>74.5%</span><ArrowRight/><strong>58.3%</strong></div>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* Dynamic Status Banner */}
       <section className={isCritical ? "monitor-status critical" : "monitor-status"}>
@@ -207,6 +222,19 @@ export default function Monitoring() {
                 <FileText size={14} /> Export Report
               </Button>
             </div>
+          </div>
+        </section>
+      )}
+
+      {isCritical && (
+        <section className="business-impact-panel">
+          <div className="business-impact-copy"><span className="panel-kicker">DEMO ESTIMATE · BUSINESS IMPACT</span><h2>Technical drift is now operational exposure.</h2><p>Estimated from affected traffic volume and the observed classification consistency drop. This is a simulated scenario, not a financial prediction.</p></div>
+          <div className="impact-metrics">
+            <div><AlertTriangle/><span>Risk level</span><strong>{businessImpact.riskLevel}</strong></div>
+            <div><UsersRound/><span>Affected requests</span><strong>{businessImpact.affectedRequests.toLocaleString()}</strong></div>
+            <div><Gauge/><span>Potential incorrect responses</span><strong>~{businessImpact.potentialIncorrectResponses.toLocaleString()}</strong></div>
+            <div><IndianRupee/><span>Estimated exposure</span><strong>{businessImpact.estimatedExposure}</strong></div>
+            <div><ShieldAlert/><span>SLA risk</span><strong>{businessImpact.slaRisk}</strong></div>
           </div>
         </section>
       )}

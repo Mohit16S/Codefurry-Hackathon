@@ -22,7 +22,9 @@ import {
   FileCheck,
   Sparkles,
   RefreshCw,
-  ShieldAlert,
+  FileCheck2,
+  LockKeyhole,
+  Cpu,
 } from "lucide-react";
 import { useState } from "react";
 import { Brand } from "./brand";
@@ -57,6 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ["Models", "/models", Boxes],
           ["Security Testing", "/playground", FlaskConical],
           ["Drift Sentinel", "/monitoring", Activity],
+          ["Governance", "/governance", LockKeyhole],
           ["Incidents", "/alerts", Bell],
           ["Compare", "/compare", GitCompareArrows],
         ] as const;
@@ -66,6 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ["Command Center", "/secops/dashboard", Radio],
           ["Production Monitoring", "/monitoring", Activity],
           ["Models", "/models", Boxes],
+          ["Integrations", "/integrations", Cpu],
           ["Incidents & Alerts", "/alerts", Bell],
           ["Playground", "/playground", FlaskConical],
           ["Compare", "/compare", GitCompareArrows],
@@ -74,6 +78,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       case "Chief AI Risk Officer":
         return [
           ["Executive Dashboard", "/risk/dashboard", Sparkles],
+          ["Risk & Governance", "/governance", LockKeyhole],
           ["Model Portfolio", "/models", Boxes],
           ["Risk Monitoring", "/monitoring", Activity],
           ["Alerts & Exposure", "/alerts", Bell],
@@ -83,6 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       case "Compliance Auditor":
         return [
           ["Audit Dashboard", "/compliance/dashboard", FileCheck],
+          ["Audit Reports", "/audit", FileCheck2],
           ["Models Under Audit", "/models", Boxes],
           ["Audit Controls", "/monitoring", Activity],
           ["Findings & Alerts", "/alerts", Bell],

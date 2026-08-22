@@ -5,6 +5,7 @@ import { AppShell } from "@/components/shell";
 import { ModelCard } from "@/components/model-card";
 import { useDemo } from "@/components/demo-provider";
 import { Search, SlidersHorizontal, Check, PlusCircle, Filter } from "lucide-react";
+import { ProcurementAssistant } from "@/components/procurement-assistant";
 
 export default function Models() {
   const { modelsList, setRegisterModalOpen } = useDemo();
@@ -69,6 +70,8 @@ export default function Models() {
         ))}
         <span className="registry-count ml-auto">{shown.length} OF {modelsList.length} MODELS INDEXED</span>
       </div>
+
+      <ProcurementAssistant models={modelsList} />
 
       {/* Models Grid */}
       <div className="models-grid">

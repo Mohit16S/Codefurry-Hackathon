@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Boxes, Activity, AlertTriangle, ShieldCheck, Zap, FileText, PlusCircle, X, ArrowRight } from "lucide-react";
+import { Search, Boxes, Activity, AlertTriangle, ShieldCheck, Zap, FileText, PlusCircle, X, ArrowRight, FileCheck2, LockKeyhole, Cpu } from "lucide-react";
 import { useDemo } from "./demo-provider";
 
 export function CommandPalette() {
@@ -114,7 +114,7 @@ export function CommandPalette() {
             )}
 
             {/* Navigation Shortcuts */}
-            {(!query || "nav".includes(query.toLowerCase()) || "dashboard".includes(query.toLowerCase()) || "monitoring".includes(query.toLowerCase())) && (
+            {(!query || "nav".includes(query.toLowerCase()) || "dashboard".includes(query.toLowerCase()) || "audit".includes(query.toLowerCase()) || "governance".includes(query.toLowerCase())) && (
               <div className="cmd-section">
                 <span className="cmd-section-title">PLATFORM NAVIGATION</span>
                 <button className="cmd-item" onClick={() => navigate("/dashboard")}>
@@ -125,6 +125,21 @@ export function CommandPalette() {
                 <button className="cmd-item" onClick={() => navigate("/monitoring")}>
                   <Activity size={16} />
                   <span>Real-Time Drift Sentinel</span>
+                  <ArrowRight size={14} className="cmd-arrow" />
+                </button>
+                <button className="cmd-item" onClick={() => navigate("/governance")}>
+                  <LockKeyhole size={16} />
+                  <span>AI Governance & Deployment Policies</span>
+                  <ArrowRight size={14} className="cmd-arrow" />
+                </button>
+                <button className="cmd-item" onClick={() => navigate("/audit")}>
+                  <FileCheck2 size={16} />
+                  <span>Audit Readiness & Evidence Reports</span>
+                  <ArrowRight size={14} className="cmd-arrow" />
+                </button>
+                <button className="cmd-item" onClick={() => navigate("/integrations")}>
+                  <Cpu size={16} />
+                  <span>Ecosystem Integrations & Webhooks</span>
                   <ArrowRight size={14} className="cmd-arrow" />
                 </button>
                 <button className="cmd-item" onClick={() => navigate("/models")}>

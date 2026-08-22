@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
 @import './screens.css';
 @import './features.css';
+@import './upgrade.css';
+@import './navfix.css';
 
 :root {
   --bg: #05070D;

@@ -43,6 +43,40 @@ export type Model = {
   versions: ModelVersion[];
 };
 
+export type GovernancePolicy = {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  rules: Array<{ metric: string; operator: "≥" | "≤"; threshold: number; unit?: string }>;
+};
+
+export type BusinessImpact = {
+  riskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+  affectedRequests: number;
+  potentialIncorrectResponses: number;
+  estimatedExposure: string;
+  slaRisk: "LOW" | "MEDIUM" | "HIGH";
+};
+
+export type AuditReport = {
+  model: string;
+  version: string;
+  certified: string;
+  tests: number;
+  failures: number;
+  driftEvents: number;
+  trust: number;
+  status: "COMPLIANT" | "REVIEW REQUIRED";
+};
+
+export type Integration = {
+  name: string;
+  category: "AI" | "Cloud" | "Developer" | "Notification";
+  status: "Connected" | "Available";
+  description: string;
+};
+
 export const models: Model[] = [
   {
     id: "sentiment-pro",
@@ -489,6 +523,64 @@ export const rootCauseAnalysis = {
   ],
   recommendedAction: "Pause deployment immediately and rollback endpoint routing to certified v3.2 baseline fingerprint (fp_7a91c4e8b32f).",
 };
+
+export const businessImpact: BusinessImpact = {
+  riskLevel: "HIGH",
+  affectedRequests: 12480,
+  potentialIncorrectResponses: 1830,
+  estimatedExposure: "₹2.4L",
+  slaRisk: "HIGH",
+};
+
+export const governancePolicies: GovernancePolicy[] = [
+  {
+    id: "pol-production-llm",
+    name: "Production LLM Policy",
+    description: "Minimum runtime assurance controls for customer-facing production models.",
+    enabled: true,
+    rules: [
+      { metric: "Trust Score", operator: "≥", threshold: 90 },
+      { metric: "Behavioral Similarity", operator: "≥", threshold: 95, unit: "%" },
+      { metric: "Hallucination Rate", operator: "≤", threshold: 5, unit: "%" },
+      { metric: "P95 Latency", operator: "≤", threshold: 200, unit: "ms" },
+      { metric: "Safety Score", operator: "≥", threshold: 90 },
+    ],
+  },
+  {
+    id: "pol-high-impact",
+    name: "High-Impact AI Guardrail",
+    description: "Stricter approval controls for financial, legal, and decision-support workloads.",
+    enabled: true,
+    rules: [
+      { metric: "Trust Score", operator: "≥", threshold: 94 },
+      { metric: "Behavioral Similarity", operator: "≥", threshold: 97, unit: "%" },
+      { metric: "Safety Score", operator: "≥", threshold: 95 },
+    ],
+  },
+];
+
+export const auditReport: AuditReport = {
+  model: "Sentiment Pro",
+  version: "v3.2",
+  certified: "21 Aug 2026",
+  tests: 1250,
+  failures: 7,
+  driftEvents: 2,
+  trust: 94,
+  status: "COMPLIANT",
+};
+
+export const integrations: Integration[] = [
+  { name: "OpenAI-compatible API", category: "AI", status: "Connected", description: "Monitor any OpenAI-compatible chat or completion endpoint." },
+  { name: "Hugging Face", category: "AI", status: "Available", description: "Register hosted inference endpoints and model cards." },
+  { name: "REST Endpoint", category: "AI", status: "Connected", description: "Protect custom JSON APIs with configurable probe adapters." },
+  { name: "AWS", category: "Cloud", status: "Available", description: "Deploy probes near Bedrock and SageMaker workloads." },
+  { name: "Azure", category: "Cloud", status: "Available", description: "Connect Azure AI endpoints and Monitor signals." },
+  { name: "GCP", category: "Cloud", status: "Available", description: "Observe Vertex AI deployments and version changes." },
+  { name: "GitHub", category: "Developer", status: "Connected", description: "Block releases that violate model governance policy." },
+  { name: "Slack", category: "Notification", status: "Connected", description: "Route critical drift incidents to the on-call channel." },
+  { name: "Webhooks", category: "Notification", status: "Connected", description: "Send signed drift payloads to downstream systems." },
+];
 
 /* ROLE SPECIFIC DATASETS */
 
